@@ -40,12 +40,22 @@ imbalanced-learn pyyaml`. Проверка с нуля: `rm -rf .venv && uv sync
 ## Запуск
 
 ```bash
-bash run.sh --model rf --data data/sample.csv --seed 42 --epochs 100 --output-dir results
+bash run.sh --model rf --seed 42 --epochs 100 --output-dir results
 ```
 
-Если `--data` отсутствует, скрипт сам сгенерирует `data/sample.csv`
-(`src/make_sample.py`, 500 строк, та же схема). Полный датасет положите как
-`data/Lung Cancer Dataset.csv` (см. `data/README.md`) и передайте его в `--data`.
+Датасет по умолчанию — `data/Lung Cancer Dataset.csv` (5000 строк).
+Если его нет, `run.sh` сам откатится на синтетический `data/sample.csv`
+(500 строк, та же схема, см. `data/README.md`). Явный путь:
+
+```bash
+bash run.sh --model rf --data "data/Lung Cancer Dataset.csv" --seed 42
+```
+
+Подбор гиперпараметров RF (GridSearchCV, сетка из ноутбука):
+
+```bash
+bash run.sh --model rf --tune --output-dir results_tuned
+```
 
 Предсказания на новых данных:
 
@@ -65,6 +75,7 @@ uv run python src/predict.py --model-path models/rf_seed42.pkl \
 | `--seed` | random seed (default `42`) |
 | `--epochs` | `n_estimators` для RF / `max_iter` для LogReg (default `100`) |
 | `--output-dir` | каталог результатов (default `results`) |
+| `--tune` | GridSearchCV для RF (без значения) |
 
 Скрипт создаёт каталоги (`mkdir -p`), при необходимости генерирует данные,
 запускает `src/train.py` и складывает в `--output-dir`: `metrics.json`,

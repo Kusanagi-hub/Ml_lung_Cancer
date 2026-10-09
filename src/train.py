@@ -37,7 +37,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -79,6 +79,11 @@ def main() -> None:
     ap.add_argument("--output-dir", default="results")
     ap.add_argument("--models-dir", default="models")
     ap.add_argument("--no-smote", action="store_true")
+    ap.add_argument(
+        "--tune",
+        action="store_true",
+        help="GridSearchCV для RF (сетка из ячейки 35 ноутбука, cv=3)",
+    )
     a = ap.parse_args()
 
     out = Path(a.output_dir)
@@ -106,7 +111,27 @@ def main() -> None:
     else:
         scaler = None
     _ = apply_encoders  # predict.py использует те же энкодеры из pkl
-    model.fit(X_train, y_train)
+    best_params = None
+    if a.tune:
+        if a.model != "rf":
+            raise ValueError("--tune поддерживается только для --model rf")
+        grid = GridSearchCV(
+            RandomForestClassifier(random_state=a.seed),
+            {
+                "n_estimators": [100, 200],
+                "max_depth": [None, 10, 20],
+                "min_samples_split": [2, 5],
+            },
+            cv=3,
+            scoring="accuracy",
+            n_jobs=-1,
+        )
+        grid.fit(X_train, y_train)
+        model = grid.best_estimator_
+        best_params = grid.best_params_
+        print(f"best_params={best_params}")
+    else:
+        model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
 
     acc = accuracy_score(y_test, y_pred)
@@ -120,6 +145,8 @@ def main() -> None:
         "f1": round(float(f1_score(y_test, y_pred, zero_division=0)), 4),
         "n_train": int(len(y_train)),
         "n_test": int(len(y_test)),
+        "tuned": bool(a.tune),
+        "best_params": best_params,
     }
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2, ensure_ascii=False))
     (out / "classification_report.txt").write_text(
