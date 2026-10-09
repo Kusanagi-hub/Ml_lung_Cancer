@@ -1,0 +1,8 @@
+# Значения по умолчанию для run.sh / src/train.py
+model: rf
+seed: 42
+test_size: 0.25
+epochs: 100 # n_estimators для RandomForest / max_iter для LogReg
+data: data/sample.csv
+output_dir: results
+models_dir: models
