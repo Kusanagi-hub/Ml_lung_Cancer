@@ -2,9 +2,13 @@ __pycache__/
 *.py[cod]
 .venv/
 .python-version
-data/
-models/
-results/
+data/*
+!data/README.md
+!data/.gitkeep
+models/*
+!models/.gitkeep
+results/*
+!results/.gitkeep
 *.egg-info/
 dist/
 build/
